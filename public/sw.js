@@ -10,7 +10,7 @@
  */
 const PRECACHE = "valet-precache-v1";
 const RUNTIME = "valet-runtime-v1";
-const PRECACHE_URLS = ["/", "/manifest.webmanifest", "/icons/icon.svg"];
+const PRECACHE_URLS = ["./", "./manifest.webmanifest", "./icons/icon.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -47,19 +47,19 @@ self.addEventListener("fetch", (event) => {
       fetch(request)
         .then((response) => {
           const copy = response.clone();
-          caches.open(RUNTIME).then((cache) => cache.put("/", copy));
+          caches.open(RUNTIME).then((cache) => cache.put("./", copy));
           return response;
         })
         .catch(() =>
           caches
-            .match("/", { ignoreSearch: true })
-            .then((cached) => cached || caches.match("/index.html")),
+            .match("./", { ignoreSearch: true })
+            .then((cached) => cached || caches.match("./index.html")),
         ),
     );
     return;
   }
 
-  if (url.pathname.startsWith("/assets/")) {
+  if (url.pathname.includes("/assets/")) {
     event.respondWith(
       caches.match(request).then(
         (cached) =>
@@ -99,7 +99,7 @@ self.addEventListener("notificationclick", (event) => {
         for (const client of clientList) {
           if ("focus" in client) return client.focus();
         }
-        return self.clients.openWindow("/");
+        return self.clients.openWindow("./");
       }),
   );
 });
@@ -121,8 +121,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(payload.title || "ALC Valet", {
       body: payload.body || "",
-      icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
+      icon: "./icons/icon-192.png",
+      badge: "./icons/icon-192.png",
       tag: payload.tag,
       data: payload.data,
     }),

@@ -1,6 +1,8 @@
 import { rememberNotified, wasNotified } from "../store/actions";
 import { store } from "../store/store";
 
+const ICON_URL = `${import.meta.env.BASE_URL}icons/icon-192.png`;
+
 /**
  * Local notifications, shown through the service worker so they appear even
  * when the (installed) app is minimised. True server-sent Web Push needs a
@@ -37,8 +39,8 @@ export async function notifyOnce(
     if (registration) {
       await registration.showNotification(title, {
         body,
-        icon: "/icons/icon-192.png",
-        badge: "/icons/icon-192.png",
+        icon: ICON_URL,
+        badge: ICON_URL,
         tag: key,
       });
       return;
