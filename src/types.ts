@@ -1,0 +1,105 @@
+/** A job is either receiving a car (incoming) or returning it (outgoing). */
+export type JobType = "incoming" | "outgoing";
+
+/** Lifecycle of a valet job. Flight state lives separately in FlightInfo. */
+export type JobStatus = "pending" | "arrived" | "completed";
+
+export type FlightPhase =
+  | "unknown"
+  | "scheduled"
+  | "delayed"
+  | "boarding"
+  | "enroute"
+  | "landed"
+  | "departed"
+  | "cancelled"
+  | "diverted";
+
+/** Whether we track this flight's arrival at ALC or its departure from ALC. */
+export type FlightRole = "arrival" | "departure";
+
+export interface FlightInfo {
+  flightNumber: string;
+  role: FlightRole;
+  phase: FlightPhase;
+  /** ISO datetimes, local to the device. */
+  scheduled?: string;
+  estimated?: string;
+  actual?: string;
+  delayMinutes?: number;
+  gate?: string;
+  terminal?: string;
+  /** The "other" airport (origin for arrivals, destination for departures). */
+  counterpartAirport?: string;
+  lastChecked?: string;
+  providerId?: string;
+}
+
+export interface Client {
+  id: string;
+  type: JobType;
+  name: string;
+  plate: string;
+  phone?: string;
+  airline?: string;
+  flightNumber?: string;
+  /** YYYY-MM-DD — the arrival (incoming) or departure/return (outgoing) date. */
+  date: string;
+  /** HH:mm — scheduled hand-over time with the client. */
+  time: string;
+  parking?: string;
+  notes?: string;
+  status: JobStatus;
+  arrivedAt?: string;
+  completedAt?: string;
+  archived: boolean;
+  flight?: FlightInfo;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type FlightProviderId = "none" | "demo" | "aerodatabox" | "aviationstack";
+
+export interface Settings {
+  flightProvider: FlightProviderId;
+  aeroDataBoxKey: string;
+  aviationStackKey: string;
+  /** Minutes between flight status refreshes per client. */
+  pollIntervalMin: number;
+  notificationsEnabled: boolean;
+  /** Notify this many minutes before an outgoing hand-over. */
+  deliveryLeadMin: number;
+  /** Minutes after touchdown before we assume the client reached the kerb. */
+  walkOutMin: number;
+  /** Two jobs closer together than this (minutes) count as a conflict. */
+  conflictWindowMin: number;
+  /** Optional Supabase sync (REST-based, see services/sync.ts). */
+  supabaseUrl: string;
+  supabaseAnonKey: string;
+  syncEnabled: boolean;
+}
+
+export const DEFAULT_SETTINGS: Settings = {
+  flightProvider: "none",
+  aeroDataBoxKey: "",
+  aviationStackKey: "",
+  pollIntervalMin: 3,
+  notificationsEnabled: false,
+  deliveryLeadMin: 45,
+  walkOutMin: 20,
+  conflictWindowMin: 15,
+  supabaseUrl: "",
+  supabaseAnonKey: "",
+  syncEnabled: false,
+};
+
+export interface AppState {
+  clients: Client[];
+  settings: Settings;
+  /** Notification dedupe keys -> epoch ms when sent. */
+  notified: Record<string, number>;
+}
+
+/** Alicante–Elche Miguel Hernández Airport. */
+export const HOME_AIRPORT_IATA = "ALC";
+export const HOME_AIRPORT_ICAO = "LEAL";
