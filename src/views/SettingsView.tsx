@@ -147,10 +147,32 @@ export function SettingsView() {
           >
             <option value="none">Off — manual tracking only</option>
             <option value="demo">Demo — simulated flights (no key needed)</option>
+            <option value="aena">Aena — via your personal relay</option>
             <option value="aerodatabox">AeroDataBox (RapidAPI key)</option>
             <option value="aviationstack">AviationStack (API key)</option>
           </select>
         </div>
+        {settings.flightProvider === "aena" && (
+          <>
+            <div className="field">
+              <label htmlFor="s-aena">Relay URL (your Cloudflare Worker)</label>
+              <input
+                id="s-aena"
+                type="url"
+                value={settings.aenaProxyUrl}
+                onChange={(e) => updateSettings({ aenaProxyUrl: e.target.value })}
+                placeholder="https://alc-valet-aena.yourname.workers.dev"
+              />
+            </div>
+            <div className="note" style={{ marginBottom: 12 }}>
+              aena.es blocks direct browser requests (no CORS), so Aena data
+              flows through a small relay you host for free — deploy{" "}
+              <strong>aena-proxy/worker.js</strong> from the repository to
+              Cloudflare Workers (steps in the README) and paste its URL here.
+              For light personal use; keep the refresh interval at 5+ minutes.
+            </div>
+          </>
+        )}
         {settings.flightProvider === "aerodatabox" && (
           <div className="field">
             <label htmlFor="s-adb">RapidAPI key for AeroDataBox</label>
@@ -189,13 +211,11 @@ export function SettingsView() {
           />
         </div>
         <div className="note">
-          <strong>About Aena:</strong> Aena (the operator of Alicante Airport)
-          does not offer a public API for flight status or car-park license-plate
-          entry, so those signals can’t be read directly and this app doesn’t
-          scrape their site. Client arrival is detected from the tracked flight
-          instead: once it lands, the client is marked “at the airport” after the
-          walk-out time above. The integration is modular — an official Aena data
-          source can be plugged in later without redesigning the app.
+          <strong>License plates:</strong> Aena exposes no way to check whether
+          a plate has entered the airport car parks — that data sits behind
+          their account login and isn’t reachable even through a personal
+          relay. Arrival is detected from the tracked flight instead (landed +
+          walk-out time above), plus the manual “Arrived” button.
         </div>
       </div>
 

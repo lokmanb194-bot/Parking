@@ -1,10 +1,12 @@
 import { store } from "../../store/store";
+import { createAena } from "./aena";
 import { createAeroDataBox } from "./aerodatabox";
 import { createAviationStack } from "./aviationstack";
 import { createDemoProvider } from "./demo";
 import { normalizeFlightNumber } from "./types";
 import type { FlightProvider } from "./types";
 
+const aena = createAena(() => store.getSnapshot().settings.aenaProxyUrl);
 const aeroDataBox = createAeroDataBox(
   () => store.getSnapshot().settings.aeroDataBoxKey,
 );
@@ -23,6 +25,7 @@ const demo = createDemoProvider((flightNumber, date) => {
 });
 
 const providers: Record<string, FlightProvider> = {
+  aena,
   aerodatabox: aeroDataBox,
   aviationstack: aviationStack,
   demo,

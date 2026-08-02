@@ -27,6 +27,19 @@ const TITLES: Record<Tab, string> = {
   settings: "Settings",
 };
 
+function Clock() {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 15_000);
+    return () => clearInterval(timer);
+  }, []);
+  return (
+    <span className="clock">
+      {`${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`}
+    </span>
+  );
+}
+
 export default function App() {
   const [tab, setTab] = useState<Tab>("incoming");
   const [formOpen, setFormOpen] = useState(false);
@@ -66,7 +79,8 @@ export default function App() {
     <>
       <header className="app-header">
         <h1>{TITLES[tab]}</h1>
-        <span className="sub">ALC · Alicante</span>
+        <span className="sub">ALC</span>
+        <Clock />
       </header>
 
       <main className="main">

@@ -58,12 +58,19 @@ export interface Client {
   updatedAt: string;
 }
 
-export type FlightProviderId = "none" | "demo" | "aerodatabox" | "aviationstack";
+export type FlightProviderId =
+  | "none"
+  | "demo"
+  | "aena"
+  | "aerodatabox"
+  | "aviationstack";
 
 export interface Settings {
   flightProvider: FlightProviderId;
   aeroDataBoxKey: string;
   aviationStackKey: string;
+  /** Base URL of a personal Aena relay (see aena-proxy/worker.js). */
+  aenaProxyUrl: string;
   /** Minutes between flight status refreshes per client. */
   pollIntervalMin: number;
   notificationsEnabled: boolean;
@@ -83,6 +90,7 @@ export const DEFAULT_SETTINGS: Settings = {
   flightProvider: "none",
   aeroDataBoxKey: "",
   aviationStackKey: "",
+  aenaProxyUrl: "",
   pollIntervalMin: 3,
   notificationsEnabled: false,
   deliveryLeadMin: 45,

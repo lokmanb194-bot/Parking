@@ -72,35 +72,55 @@ Flight tracking**:
 |---|---|---|
 | **Off** | — | Manual tracking only. |
 | **Demo** | — | Simulated flights so you can try the whole pipeline (delays, landings, arrival detection, notifications) without any account. |
+| **Aena (personal relay)** | your relay URL | Reads Aena's own public flight info through a relay you host — see below. |
 | **AeroDataBox** | RapidAPI key | Good European/ALC coverage, free tier for light use. Subscribe at rapidapi.com → AeroDataBox, paste the `X-RapidAPI-Key`. |
 | **AviationStack** | API key | aviationstack.com; the free tier is monthly-quota-limited, so keep the refresh interval generous. |
+
+### Aena data through a personal relay
+
+aena.es sends no CORS headers, so a static web app can never query it
+directly from the browser — the request has to hop through a server you
+control. The repo ships that server: `aena-proxy/worker.js`, a Cloudflare
+Worker (free tier is plenty for one valet).
+
+1. [dash.cloudflare.com](https://dash.cloudflare.com) → **Workers & Pages →
+   Create → Worker**, paste `aena-proxy/worker.js`, deploy.
+2. Aena's internal flight-info endpoint is undocumented and changes with
+   site redesigns, so the Worker keeps it in one `AENA_UPSTREAM` constant:
+   open aena.es flight info in a browser, search any ALC flight, copy the
+   XHR request URL from DevTools → Network, and paste its pattern there.
+   `?debug=1` on the Worker shows the raw upstream answer while tuning.
+3. Paste the Worker URL into **Settings → Flight tracking → Aena**.
+
+Heads-up, honestly stated: this reads Aena's public website data outside an
+official API. For light personal use (one device, refresh every 5+ min)
+that is generally tolerated but it sits in a gray zone of their website
+terms, and a site redesign can break it until you re-capture the endpoint —
+which is why the licensed providers above remain the more robust option.
 
 Adding another provider (FlightAware AeroAPI, Cirium, an official Aena feed
 if one appears…) means implementing one interface —
 `src/services/flightProviders/types.ts` — and registering it in
 `src/services/flightProviders/index.ts`. Nothing else changes.
 
-## The Aena limitation (please read)
+## The license-plate limitation (please read)
 
-Aena, the operator of Alicante Airport, **does not offer a public API** for
-flight status or for car-park license-plate entry detection (the signal the
-official Aena app uses to know a vehicle entered the airport). This app
-deliberately does **not** scrape Aena's website or app: scraping would be
-brittle and against their terms of service.
+Flight status can now come straight from Aena via the personal relay above.
+**License-plate entry detection cannot.** The signal the official Aena app
+uses to know a vehicle entered an airport car park lives behind Aena's
+authenticated account systems (and anti-bot protection); it is not exposed
+on any public page a personal relay could read. There is simply no lawful,
+workable way for a client-side app to query "has plate 1234-ABC entered
+ALC" today.
 
-Consequences, and how the app compensates:
-
-- **Flight status** comes from licensed commercial providers (above)
-  instead. These cover the same underlying data for ALC flights.
-- **"Client arrived at the airport"** cannot be read from a plate-entry
-  feed. Instead the app uses a modular *arrival detector*
-  (`src/services/arrival.ts`): today it infers arrival from the tracked
-  flight (landed + configurable walk-out minutes), plus the manual
-  **Arrived** button. If you ever obtain licensed plate-entry data (e.g.
-  through the car-park operator or an Aena commercial agreement), implement
-  the `ArrivalDetector` interface against it and add it to the detector
-  list — the rest of the app (green highlight, pin-to-top, notification)
-  already works off that signal.
+How the app compensates: a modular *arrival detector*
+(`src/services/arrival.ts`) infers arrival from the tracked flight (landed
++ configurable walk-out minutes), plus the always-available manual
+**Arrived** button. If you ever obtain plate-entry data (e.g. through the
+car-park operator or an Aena commercial agreement), implement the
+`ArrivalDetector` interface against it and add it to the detector list —
+the green highlight, pin-to-top and notification already work off that
+signal.
 
 ## Notifications: local vs push
 
