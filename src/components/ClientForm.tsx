@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { addClient, updateClient } from "../store/actions";
 import type { ClientDraft } from "../store/actions";
 import { todayISO } from "../utils/time";
@@ -61,9 +62,23 @@ export function ClientForm({ client, defaultType, onClose }: Props) {
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>{client ? "Edit client" : "New client"}</h2>
+    <motion.div
+      className="modal-backdrop"
+      onClick={onClose}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.18 }}
+    >
+      <motion.div
+        className="modal"
+        onClick={(e) => e.stopPropagation()}
+        initial={{ y: 40, opacity: 0.6 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 40, opacity: 0 }}
+        transition={{ duration: 0.26, ease: [0.2, 0.8, 0.2, 1] }}
+      >
+        <h2>{client ? "Edit reservation" : "New reservation"}</h2>
 
         <div className="field">
           <div className="segmented">
@@ -193,10 +208,10 @@ export function ClientForm({ client, defaultType, onClose }: Props) {
             Cancel
           </button>
           <button className="btn primary grow" onClick={save}>
-            {client ? "Save changes" : "Add client"}
+            {client ? "Save changes" : "Add reservation"}
           </button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

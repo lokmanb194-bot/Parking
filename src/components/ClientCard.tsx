@@ -1,15 +1,17 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { FlightStatusRow, flightTone } from "./FlightStatus";
 import {
   completeClient,
   deleteClient,
   markArrived,
+  setParkingStatus,
   undoComplete,
   unmarkArrived,
 } from "../store/actions";
 import { syncDelete } from "../services/sync";
 import { formatDayLabel } from "../utils/time";
-import type { Client } from "../types";
+import type { Client, ParkingStatus } from "../types";
 
 interface Props {
   client: Client;
@@ -21,16 +23,18 @@ export function ClientCard({ client, onEdit, showDate }: Props) {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const tone = flightTone(client.flight);
-  const cardClass =
+  const cardClass = [
+    `type-${client.type}`,
+    client.parkingStatus === "in_parking" ? "parked" : "",
     client.status === "completed"
       ? "status-completed"
       : client.status === "arrived"
         ? "status-arrived"
-        : tone === "bad"
-          ? "status-bad"
-          : tone === "warn"
-            ? "status-warn"
-            : "";
+        : "",
+    tone === "bad" ? "flight-bad" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const handleDelete = () => {
     if (!confirmDelete) {
@@ -43,11 +47,21 @@ export function ClientCard({ client, onEdit, showDate }: Props) {
   };
 
   return (
-    <article className={`card ${cardClass}`}>
+    <motion.article
+      layout
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.97 }}
+      transition={{ duration: 0.24, ease: [0.2, 0.8, 0.2, 1] }}
+      className={`card ${cardClass}`}
+    >
       <div className="card-top">
         <span className="card-title">{client.name}</span>
+        {client.parkingStatus === "in_parking" && (
+          <span className="pill blue dot">In parking</span>
+        )}
         {client.status === "arrived" && (
-          <span className="pill good">● At airport</span>
+          <span className="pill good dot">At airport</span>
         )}
         <span className="plate">{client.plate}</span>
       </div>
@@ -77,6 +91,11 @@ export function ClientCard({ client, onEdit, showDate }: Props) {
       </div>
 
       {client.notes && <div className="notes">{client.notes}</div>}
+
+      <ParkingControl
+        value={client.parkingStatus}
+        onChange={(s) => setParkingStatus(client.id, s)}
+      />
 
       <div className="card-actions">
         {client.status === "completed" ? (
@@ -117,6 +136,42 @@ export function ClientCard({ client, onEdit, showDate }: Props) {
           {confirmDelete ? "Sure?" : "🗑"}
         </button>
       </div>
-    </article>
+    </motion.article>
+  );
+}
+
+const PARK_LABELS: Record<ParkingStatus, string> = {
+  awaiting: "Awaiting",
+  in_parking: "In parking",
+  returned: "Returned",
+};
+
+export function ParkingControl({
+  value,
+  onChange,
+}: {
+  value: ParkingStatus;
+  onChange: (status: ParkingStatus) => void;
+}) {
+  const options: ParkingStatus[] = ["awaiting", "in_parking", "returned"];
+  const activeClass: Record<ParkingStatus, string> = {
+    awaiting: "on-await",
+    in_parking: "on-in",
+    returned: "on-ret",
+  };
+  return (
+    <div className="park-control" role="group" aria-label="Parking status">
+      {options.map((opt) => (
+        <button
+          key={opt}
+          className={value === opt ? activeClass[opt] : ""}
+          aria-pressed={value === opt}
+          onClick={() => onChange(opt)}
+        >
+          {opt === "awaiting" ? "🅿️" : opt === "in_parking" ? "🚗" : "🔑"}
+          {PARK_LABELS[opt]}
+        </button>
+      ))}
+    </div>
   );
 }

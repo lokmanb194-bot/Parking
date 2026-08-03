@@ -210,12 +210,71 @@ export function SettingsView() {
             }
           />
         </div>
+      </div>
+
+      <div className="settings-card">
+        <h3>🅿️ Car-park tracking</h3>
+        <p className="desc">
+          Set each car’s parking status by hand on its card or in the Daily
+          Program (Awaiting → In parking → Returned). Optionally, a self-hosted
+          connector you run can set it automatically.
+        </p>
+        <div className="note warn" style={{ marginBottom: 12 }}>
+          <strong>Your Aena login never goes in this app.</strong> This app is
+          static and its repo is public, so it can’t safely hold your Aena email
+          and password, and automating an Aena account login is against their
+          terms. Instead, run the connector in{" "}
+          <strong>parking-connector/</strong> on your own machine — your
+          credentials stay there — and it feeds only the parking status back
+          here.
+        </div>
+        <div className="field">
+          <label htmlFor="s-conn">Parking connector URL (yours)</label>
+          <input
+            id="s-conn"
+            type="url"
+            value={settings.parkingConnectorUrl}
+            onChange={(e) =>
+              updateSettings({ parkingConnectorUrl: e.target.value })
+            }
+            placeholder="http://localhost:8787  or  https://…"
+          />
+        </div>
+        <div className="field">
+          <label htmlFor="s-conntok">Connector token (optional)</label>
+          <input
+            id="s-conntok"
+            type="password"
+            value={settings.parkingConnectorToken}
+            onChange={(e) =>
+              updateSettings({ parkingConnectorToken: e.target.value })
+            }
+            placeholder="Shared secret your connector checks"
+          />
+        </div>
         <div className="note">
-          <strong>License plates:</strong> Aena exposes no way to check whether
-          a plate has entered the airport car parks — that data sits behind
-          their account login and isn’t reachable even through a personal
-          relay. Arrival is detected from the tracked flight instead (landed +
-          walk-out time above), plus the manual “Arrived” button.
+          The connector only ever returns which of the day’s plates are inside;
+          the app matches them to your reservations by plate. See the README
+          (“Self-hosted parking connector”) for the ~15-minute setup.
+        </div>
+      </div>
+
+      <div className="settings-card">
+        <h3>🔒 Admin passcode (optional)</h3>
+        <p className="desc">
+          Leave empty for instant access. Set a code to require it when the app
+          opens on this device — a convenience lock, not encryption.
+        </p>
+        <div className="field">
+          <label htmlFor="s-pass">Passcode</label>
+          <input
+            id="s-pass"
+            type="text"
+            inputMode="numeric"
+            value={settings.passcode}
+            onChange={(e) => updateSettings({ passcode: e.target.value })}
+            placeholder="e.g. 1234 (empty = no lock)"
+          />
         </div>
       </div>
 

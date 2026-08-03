@@ -1,11 +1,18 @@
 import { store } from "./store";
 import { newId } from "../utils/id";
-import type { Client, FlightInfo, Settings } from "../types";
+import type { Client, FlightInfo, ParkingStatus, Settings } from "../types";
 
 export type ClientDraft = Omit<
   Client,
-  "id" | "status" | "archived" | "createdAt" | "updatedAt" | "flight"
->;
+  | "id"
+  | "status"
+  | "parkingStatus"
+  | "parkedAt"
+  | "archived"
+  | "createdAt"
+  | "updatedAt"
+  | "flight"
+> & { parkingStatus?: ParkingStatus };
 
 function touch(client: Client): Client {
   return { ...client, updatedAt: new Date().toISOString() };
@@ -24,6 +31,7 @@ export function addClient(draft: ClientDraft): Client {
     ...draft,
     id: newId(),
     status: "pending",
+    parkingStatus: draft.parkingStatus ?? "awaiting",
     archived: false,
     createdAt: now,
     updatedAt: now,
@@ -94,6 +102,51 @@ export function archiveCompleted(): number {
 
 export function applyFlightUpdate(id: string, flight: FlightInfo): void {
   patchClient(id, (c) => ({ ...c, flight }));
+}
+
+export function setParkingStatus(id: string, parkingStatus: ParkingStatus): void {
+  patchClient(id, (c) => ({
+    ...c,
+    parkingStatus,
+    parkedAt:
+      parkingStatus === "in_parking"
+        ? (c.parkedAt ?? new Date().toISOString())
+        : parkingStatus === "awaiting"
+          ? undefined
+          : c.parkedAt,
+  }));
+}
+
+/**
+ * Apply parking status coming from the self-hosted connector, keyed by plate.
+ * Only touches non-archived, non-returned reservations and never downgrades a
+ * manual "returned". Returns the number of reservations updated.
+ */
+export function applyParkingByPlate(
+  byPlate: Record<string, ParkingStatus>,
+): number {
+  const norm = (p: string) => p.replace(/[\s-]/g, "").toUpperCase();
+  const map = new Map(Object.entries(byPlate).map(([k, v]) => [norm(k), v]));
+  let changed = 0;
+  store.update((state) => ({
+    ...state,
+    clients: state.clients.map((c) => {
+      if (c.archived || c.parkingStatus === "returned") return c;
+      const next = map.get(norm(c.plate));
+      if (!next || next === c.parkingStatus) return c;
+      changed++;
+      return {
+        ...c,
+        parkingStatus: next,
+        parkedAt:
+          next === "in_parking"
+            ? (c.parkedAt ?? new Date().toISOString())
+            : c.parkedAt,
+        updatedAt: new Date().toISOString(),
+      };
+    }),
+  }));
+  return changed;
 }
 
 export function updateSettings(patch: Partial<Settings>): void {

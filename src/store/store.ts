@@ -36,7 +36,11 @@ class Store {
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<AppState>;
         return {
-          clients: parsed.clients ?? [],
+          // Backfill fields added in later versions so older saves keep working.
+          clients: (parsed.clients ?? []).map((c) => ({
+            ...c,
+            parkingStatus: c.parkingStatus ?? "awaiting",
+          })),
           settings: { ...DEFAULT_SETTINGS, ...parsed.settings },
           notified: parsed.notified ?? {},
         };

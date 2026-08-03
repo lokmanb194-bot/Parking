@@ -114,22 +114,35 @@ await page.evaluate((state) => {
 await page.reload();
 await page.waitForTimeout(2500); // let the demo provider poll once
 
-const tabs = ["Pickups", "Returns", "Schedule", "Dashboard", "Settings"];
-for (const tab of tabs) {
-  await page.locator(".tab-btn", { hasText: tab }).click();
-  await page.waitForTimeout(400);
-  await page.screenshot({ path: `${outDir}/${tab.toLowerCase()}.png` });
-  console.log(`captured ${tab}`);
+// Bottom-nav tabs (short labels) → screenshot names.
+const tabs = [
+  ["Home", "dashboard"],
+  ["Pickups", "pickups"],
+  ["Returns", "returns"],
+  ["Program", "program"],
+  ["Schedule", "schedule"],
+];
+for (const [label, name] of tabs) {
+  await page.locator(".tab-btn", { hasText: label }).click();
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: `${outDir}/${name}.png` });
+  console.log(`captured ${name}`);
 }
 
-// Timeline mode + the add-client form.
+// Settings lives behind the header gear on mobile.
+await page.locator('[aria-label="Settings"]').click();
+await page.waitForTimeout(500);
+await page.screenshot({ path: `${outDir}/settings.png` });
+console.log("captured settings");
+
+// Timeline mode + the reservation form.
 await page.locator(".tab-btn", { hasText: "Schedule" }).click();
 await page.getByRole("button", { name: "Timeline" }).click();
 await page.waitForTimeout(300);
 await page.screenshot({ path: `${outDir}/timeline.png` });
 await page.locator(".tab-btn", { hasText: "Pickups" }).click();
-await page.getByRole("button", { name: "Add client" }).click();
-await page.waitForTimeout(300);
+await page.getByRole("button", { name: "Add reservation" }).click();
+await page.waitForTimeout(400);
 await page.screenshot({ path: `${outDir}/form.png` });
 console.log("captured timeline + form");
 

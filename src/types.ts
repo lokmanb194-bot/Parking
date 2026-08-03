@@ -4,6 +4,17 @@ export type JobType = "incoming" | "outgoing";
 /** Lifecycle of a valet job. Flight state lives separately in FlightInfo. */
 export type JobStatus = "pending" | "arrived" | "completed";
 
+/**
+ * Where the car physically is relative to the Aena car park.
+ *  - awaiting:   not yet parked (incoming client hasn't handed it over, or
+ *                outgoing car not yet confirmed inside).
+ *  - in_parking: confirmed inside the Aena car park.
+ *  - returned:   handed back to the owner / left the car park.
+ * Set manually, or fed by a self-hosted parking connector (see
+ * services/parkingConnector.ts and parking-connector/).
+ */
+export type ParkingStatus = "awaiting" | "in_parking" | "returned";
+
 export type FlightPhase =
   | "unknown"
   | "scheduled"
@@ -50,6 +61,9 @@ export interface Client {
   parking?: string;
   notes?: string;
   status: JobStatus;
+  parkingStatus: ParkingStatus;
+  /** ISO time the car was confirmed inside the car park (manual or connector). */
+  parkedAt?: string;
   arrivedAt?: string;
   completedAt?: string;
   archived: boolean;
@@ -71,6 +85,10 @@ export interface Settings {
   aviationStackKey: string;
   /** Base URL of a personal Aena relay (see aena-proxy/worker.js). */
   aenaProxyUrl: string;
+  /** Base URL of a self-hosted parking connector (see parking-connector/). */
+  parkingConnectorUrl: string;
+  /** Optional shared token the connector requires. */
+  parkingConnectorToken: string;
   /** Minutes between flight status refreshes per client. */
   pollIntervalMin: number;
   notificationsEnabled: boolean;
@@ -84,6 +102,8 @@ export interface Settings {
   supabaseUrl: string;
   supabaseAnonKey: string;
   syncEnabled: boolean;
+  /** Optional admin passcode; empty = no lock (easy access by default). */
+  passcode: string;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -91,6 +111,8 @@ export const DEFAULT_SETTINGS: Settings = {
   aeroDataBoxKey: "",
   aviationStackKey: "",
   aenaProxyUrl: "",
+  parkingConnectorUrl: "",
+  parkingConnectorToken: "",
   pollIntervalMin: 3,
   notificationsEnabled: false,
   deliveryLeadMin: 45,
@@ -99,6 +121,7 @@ export const DEFAULT_SETTINGS: Settings = {
   supabaseUrl: "",
   supabaseAnonKey: "",
   syncEnabled: false,
+  passcode: "",
 };
 
 export interface AppState {

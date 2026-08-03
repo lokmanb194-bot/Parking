@@ -1,21 +1,34 @@
 # ALC Valet — Airport Valet Operations PWA
 
-A fast, dark-mode, mobile-first Progressive Web App for running an airport
-valet operation at **Alicante Airport (ALC)**: track incoming clients
-(pickups), outgoing clients (returns), live flight status, your daily
-schedule, and get notified when things change — even with the app minimised.
+A fast, professional Progressive Web App for running an airport valet
+operation at **Alicante Airport (ALC)**. It's an **admin panel**: a
+responsive desktop **sidebar** layout that collapses to mobile **bottom
+tabs**, a scarlet-and-blue dark theme, and animated (Framer Motion) page and
+list transitions. Make reservations, build the day's program, track live
+flights and which cars are inside the car park, and get notified when things
+change — even with the app minimised.
 
-Built with **React 19 + TypeScript + Vite**, no backend required. Data is
-stored **offline-first on the device**, with optional multi-device sync via
-Supabase.
+Built with **React 19 + TypeScript + Vite + Framer Motion**, no backend
+required. Data is stored **offline-first on the device**, with optional
+multi-device sync via Supabase.
 
 ## Features
 
+- **Admin panel, responsive** — a sidebar workspace on desktop/tablet and
+  bottom-tab app on phones; identical data, one codebase.
+- **Daily Program** — the fast reservation desk: pick a date, add the day's
+  cars inline (name, plate, time, flight), and cycle each car's parking
+  status with one tap.
+- **Car-park tracking** — every reservation carries *Awaiting → In parking →
+  Returned*; set it manually, or feed it from a self-hosted connector (see
+  below). "Cars in parking" leads the dashboard.
 - **Two operational lists** — *Pickups* (clients arriving to drop off their
   car before flying out) and *Returns* (clients flying back in to collect
-  their car), each with open-job badges in the tab bar.
-- **Full client records** — name, license plate, phone, airline, flight
+  their car), each with open-job badges.
+- **Full reservation records** — name, license plate, phone, airline, flight
   number, date, scheduled time, parking location, notes, status.
+- **Optional admin passcode** — off by default for instant access; set a code
+  to lock the app on a device.
 - **Automatic flight tracking** — scheduled/estimated/actual times, delays,
   gate, landed / cancelled / diverted, refreshed automatically on a
   configurable interval while the app is open. No manual refresh needed.
@@ -103,24 +116,36 @@ if one appears…) means implementing one interface —
 `src/services/flightProviders/types.ts` — and registering it in
 `src/services/flightProviders/index.ts`. Nothing else changes.
 
-## The license-plate limitation (please read)
+## Tracking cars in the Aena car park
 
-Flight status can now come straight from Aena via the personal relay above.
-**License-plate entry detection cannot.** The signal the official Aena app
-uses to know a vehicle entered an airport car park lives behind Aena's
-authenticated account systems (and anti-bot protection); it is not exposed
-on any public page a personal relay could read. There is simply no lawful,
-workable way for a client-side app to query "has plate 1234-ABC entered
-ALC" today.
+Every reservation has a parking status — **Awaiting → In parking →
+Returned** — shown on its card and in the Daily Program, and summarised on
+the dashboard ("Cars in parking"). You set it with one tap, and it can also
+be driven automatically by a connector you host yourself.
 
-How the app compensates: a modular *arrival detector*
-(`src/services/arrival.ts`) infers arrival from the tracked flight (landed
-+ configurable walk-out minutes), plus the always-available manual
-**Arrived** button. If you ever obtain plate-entry data (e.g. through the
-car-park operator or an Aena commercial agreement), implement the
-`ArrivalDetector` interface against it and add it to the detector list —
-the green highlight, pin-to-top and notification already work off that
-signal.
+### Self-hosted parking connector
+
+The signal for "has plate 1234-ABC entered ALC" lives behind an Aena
+**account login**. A public, static web app must never hold your Aena
+password, and automating that login is against Aena's terms — so the app
+does not. Instead, the `parking-connector/` folder contains a small service
+**you** run on your own machine: your credentials stay in its local `.env`
+(never in the app, never in this repo), it works out which of the day's
+plates are inside, and it returns only a `{ plate: status }` map that the app
+polls and matches to your reservations. Setup is in
+[`parking-connector/README.md`](parking-connector/README.md); it ships a
+`MODE=mock` so you can test the whole pipeline before writing any Aena code.
+
+This is a personal-use tool in a gray area of Aena's terms — poll gently and
+stop if asked. For sanctioned, robust data, a licensed provider or a
+car-park-operator agreement is the durable route.
+
+### Flight-based fallback
+
+Independently, a modular *arrival detector* (`src/services/arrival.ts`)
+infers a returning client has reached the terminal from the tracked flight
+(landed + configurable walk-out minutes), and the manual **Arrived** button
+is always available.
 
 ## Notifications: local vs push
 

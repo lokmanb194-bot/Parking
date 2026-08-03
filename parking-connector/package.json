@@ -1,0 +1,10 @@
+{
+  "name": "alc-valet-parking-connector",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Self-hosted connector that feeds Aena car-park status into ALC Valet. Your credentials stay here.",
+  "scripts": {
+    "start": "node --env-file=.env server.mjs"
+  }
+}

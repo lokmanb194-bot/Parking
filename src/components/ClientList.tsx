@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { AnimatePresence } from "framer-motion";
 import { ClientCard } from "./ClientCard";
 import { useAppState } from "../store/store";
 import { archiveCompleted } from "../store/actions";
@@ -83,9 +84,13 @@ export function ClientList({ type, onEdit }: Props) {
       {groups.map((group) => (
         <section key={group.key}>
           <div className="date-heading">{group.label}</div>
-          {group.items.map((c) => (
-            <ClientCard key={c.id} client={c} onEdit={onEdit} />
-          ))}
+          <div className="cards-2col">
+            <AnimatePresence initial={false}>
+              {group.items.map((c) => (
+                <ClientCard key={c.id} client={c} onEdit={onEdit} />
+              ))}
+            </AnimatePresence>
+          </div>
         </section>
       ))}
 
